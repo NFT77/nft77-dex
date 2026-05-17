@@ -661,8 +661,9 @@ app.get('/api/status', (req, res) => {
 });
 
 // ==================== START SERVER ====================
-app.listen(PORT, () => {
-    console.log(`
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                              ║
 ║   🚀 NFT77 DEX BACKEND v3.0 - RUNNING                                        ║
@@ -696,5 +697,9 @@ app.listen(PORT, () => {
 ║       ✅ Fee: 0.3% - 1.5% (based on slippage)                               ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
-    `);
-});
+        `);
+    });
+}
+
+// Ekspor untuk Vercel Serverless Functions
+module.exports = app;
