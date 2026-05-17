@@ -1,14 +1,21 @@
 {
   "name": "nft77-dex",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Multi-Chain Safety Scanner & Bridge for DeFi",
+  "main": "server.js",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "defi",
+    "bridge",
+    "scanner",
+    "web3",
+    "crypto"
+  ],
+  "author": "NFT77",
+  "license": "MIT",
   "type": "commonjs",
   "dependencies": {
     "axios": "^1.16.1",
