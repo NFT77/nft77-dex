@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>NFT77 DEX - Multi-Chain Safety Scanner & Bridge</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23F7931A'/%3E%3Cstop offset='100%25' style='stop-color:%23D97A00'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='20' fill='url(%23grad)'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-weight='bold' font-family='Arial'%3EN%3C/text%3E%3C/svg%3E">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <!-- Web3 Provider untuk Multi-Wallet -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes logoGlow {
+            0%, 100% { filter: drop-shadow(0 0 2px rgba(247, 147, 26, 0.5)); }
+            50% { filter: drop-shadow(0 0 8px rgba(247, 147, 26, 0.8)); }
+        }
+        
+        .logo-container {
+            animation: logoGlow 2s ease-in-out infinite;
+        }
+        
+        .logo-shield {
+            transition: all 0.3s ease;
+        }
+        
+        .logo-shield:hover {
+            transform: scale(1.05);
+        }
+        
+        .network-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            object-fit: contain;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        .network-icon-sm {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+        
+        .network-option-icon {
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+            margin-right: 8px;
+            display: inline-block;
+        }
+        
+        .network-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        body.dark {
+            background-color: #0A0E17;
+            color: white;
+        }
+        body.light {
+            background-color: #F3F4F6;
+            color: #1F2937;
+        }
+        
+        body, .card, .bg-card, .bg-gray-800, .bg-gray-900, input, select, button, .network-card {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        
+        body.dark .card-bg { background-color: #111827; border-color: rgba(255,255,255,0.1); }
+        body.light .card-bg { background-color: white; border-color: #E5E7EB; }
+        
+        body.dark .input-bg { background-color: #1F2937; border-color: #374151; color: white; }
+        body.light .input-bg { background-color: #F9FAFB; border-color: #E5E7EB; color: #1F2937; }
+        
+        body.dark .result-bg { background-color: rgba(31, 41, 55, 0.5); }
+        body.light .result-bg { background-color: #F3F4F6; }
+        
+        body.dark .border-custom { border-color: rgba(255,255,255,0.1); }
+        body.light .border-custom { border-color: #E5E7EB; }
+        
+        .scan-btn {
+            background: linear-gradient(135deg, #F7931A 0%, #D97A00 100%);
+            color: #000000;
+            font-weight: 700;
+        }
+        .scan-btn:hover {
+            background: linear-gradient(135deg, #D97A00 0%, #F7931A 100%);
+            transform: scale(1.02);
+        }
+        
+        .swap-btn {
+            color: #000000 !important;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+        .swap-btn:hover {
+            transform: scale(1.02);
+            filter: brightness(1.1);
+        }
+        
+        .wallet-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .wallet-btn:hover {
+            background: rgba(247, 147, 26, 0.2);
+            border-color: rgba(247, 147, 26, 0.3);
+        }
+        body.light .wallet-btn {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        body.light .wallet-btn:hover {
+            background: rgba(247, 147, 26, 0.1);
+        }
+        
+        .theme-toggle {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
+        body.dark .theme-toggle {
+            background-color: #1F2937;
+            border-color: rgba(255,255,255,0.1);
+        }
+        body.light .theme-toggle {
+            background-color: #E5E7EB;
+            border-color: #D1D5DB;
+        }
+        
+        .theme-icon {
+            font-size: 18px;
+        }
+        body.dark .theme-icon { color: #F7931A; }
+        body.light .theme-icon { color: #F7931A; }
+        
+        body.dark .network-badge-eth { background: rgba(114, 137, 218, 0.15); color: #7289DA; border: 1px solid rgba(114, 137, 218, 0.3); }
+        body.dark .network-badge-bsc { background: rgba(243, 167, 50, 0.15); color: #F3A732; border: 1px solid rgba(243, 167, 50, 0.3); }
+        body.dark .network-badge-polygon { background: rgba(130, 71, 229, 0.15); color: #8247E5; border: 1px solid rgba(130, 71, 229, 0.3); }
+        body.dark .network-badge-arb { background: rgba(40, 160, 240, 0.15); color: #28A0F0; border: 1px solid rgba(40, 160, 240, 0.3); }
+        body.dark .network-badge-op { background: rgba(235, 56, 106, 0.15); color: #EB386A; border: 1px solid rgba(235, 56, 106, 0.3); }
+        body.dark .network-badge-base { background: rgba(0, 82, 255, 0.15); color: #0052FF; border: 1px solid rgba(0, 82, 255, 0.3); }
+        body.dark .network-badge-avax { background: rgba(232, 65, 66, 0.15); color: #E84142; border: 1px solid rgba(232, 65, 66, 0.3); }
+        
+        body.light .network-badge-eth { background: rgba(114, 137, 218, 0.1); color: #4A5A9E; border: 1px solid rgba(114, 137, 218, 0.2); }
+        body.light .network-badge-bsc { background: rgba(243, 167, 50, 0.1); color: #C47D1A; border: 1px solid rgba(243, 167, 50, 0.2); }
+        body.light .network-badge-polygon { background: rgba(130, 71, 229, 0.1); color: #6B3EC5; border: 1px solid rgba(130, 71, 229, 0.2); }
+        body.light .network-badge-arb { background: rgba(40, 160, 240, 0.1); color: #1A7BC4; border: 1px solid rgba(40, 160, 240, 0.2); }
+        body.light .network-badge-op { background: rgba(235, 56, 106, 0.1); color: #C4184A; border: 1px solid rgba(235, 56, 106, 0.2); }
+        body.light .network-badge-base { background: rgba(0, 82, 255, 0.1); color: #0044CC; border: 1px solid rgba(0, 82, 255, 0.2); }
+        body.light .network-badge-avax { background: rgba(232, 65, 66, 0.1); color: #B82121; border: 1px solid rgba(232, 65, 66, 0.2); }
+        
+        .network-card {
+            border-radius: 12px;
+            padding: 8px 4px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        body.dark .network-card { background: rgba(255, 255, 255, 0.03); }
+        body.light .network-card { background: rgba(0, 0, 0, 0.03); }
+        .network-card:hover { background: rgba(247, 147, 26, 0.1); }
+        
+        .optimism-logo {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #FF0420 0%, #EB386A 100%);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+        }
+        .optimism-logo-sm {
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #FF0420 0%, #EB386A 100%);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        body.dark ::-webkit-scrollbar { width: 4px; }
+        body.dark ::-webkit-scrollbar-track { background: #1A1F2E; }
+        body.dark ::-webkit-scrollbar-thumb { background: #F7931A; border-radius: 10px; }
+        body.light ::-webkit-scrollbar { width: 4px; }
+        body.light ::-webkit-scrollbar-track { background: #E5E7EB; }
+        body.light ::-webkit-scrollbar-thumb { background: #F7931A; border-radius: 10px; }
+        
+        .navbar-blur {
+            backdrop-filter: blur(12px);
+        }
+        body.dark .navbar-blur { background-color: rgba(10, 14, 23, 0.95); border-color: rgba(255,255,255,0.05); }
+        body.light .navbar-blur { background-color: rgba(255, 255, 255, 0.95); border-color: #E5E7EB; }
+        
+        .navbar-text { transition: color 0.3s ease; }
+        body.dark .navbar-text { color: white; }
+        body.light .navbar-text { color: #1F2937; }
+        
+        .navbar-subtext { transition: color 0.3s ease; }
+        body.dark .navbar-subtext { color: #9CA3AF; }
+        body.light .navbar-subtext { color: #6B7280; }
+        
+        .wallet-option {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .wallet-option:hover {
+            background: rgba(247, 147, 26, 0.1);
+            transform: translateX(4px);
+        }
+    </style>
+</head>
+<body class="dark">
+
+    <!-- NAVIGATION -->
+    <nav class="navbar-blur border-b sticky top-0 z-50">
+        <div class="max-w-2xl mx-auto px-4 sm:px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="logo-container">
+                        <svg width="40" height="40" viewBox="0 0 100 100" class="logo-shield">
+                            <defs>
+                                <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#F7931A"/>
+                                    <stop offset="50%" style="stop-color:#FF6B00"/>
+                                    <stop offset="100%" style="stop-color:#D97A00"/>
+                                </linearGradient>
+                                <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#F7931A" flood-opacity="0.3"/>
+                                </filter>
+                            </defs>
+                            <path d="M50 5 L85 20 L85 50 C85 75 70 88 50 95 C30 88 15 75 15 50 L15 20 Z" fill="url(#logoGrad)" filter="url(#shadow)"/>
+                            <path d="M50 15 L78 27 L78 50 C78 70 66 82 50 88 C34 82 22 70 22 50 L22 27 Z" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+                            <text x="50" y="60" text-anchor="middle" font-size="32" font-weight="900" fill="white" font-family="Arial, sans-serif" letter-spacing="-1">77</text>
+                            <circle cx="70" cy="18" r="2" fill="white" opacity="0.6"/>
+                            <circle cx="30" cy="18" r="2" fill="white" opacity="0.6"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-xl tracking-tight navbar-text">NFT<span class="text-dex-accent">77</span></span>
+                            <span class="text-[9px] bg-dex-accent/20 text-dex-accent px-1.5 py-0.5 rounded-full">DEX</span>
+                        </div>
+                        <div class="flex items-center gap-1 mt-0.5">
+                            <i class="ri-shield-check-line text-dex-accent text-[9px]"></i>
+                            <span class="text-[9px] navbar-subtext">Multi-Chain Safety Shield + Bridge</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-2 items-center">
+                    <button id="connectWalletBtn" class="wallet-btn rounded-xl px-3 py-2 text-sm font-medium transition-all flex items-center gap-2">
+                        <i class="ri-wallet-3-line text-dex-accent"></i>
+                        <span id="walletStatus" class="hidden sm:inline">Connect Wallet</span>
+                    </button>
+                    <button id="themeToggle" class="theme-toggle w-9 h-9 rounded-xl flex items-center justify-center transition-all">
+                        <i id="themeIcon" class="ri-moon-line theme-icon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-2xl mx-auto px-4 sm:px-6 py-6">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl sm:text-3xl font-bold mb-2 body.dark:text-white body.light:text-gray-900">
+                Multi-Chain <span class="text-dex-accent">Safety Scanner & Bridge</span>
+            </h1>
+            <p class="text-gray-500 text-sm">
+                Surf smoothly & safely across 7 chains • 5 Layer Protection • Cross-Chain Bridge
+            </p>
+        </div>
+
+        <div class="card-bg rounded-2xl border p-5 shadow-2xl">
+            <div class="mb-4">
+                <label class="text-sm text-gray-400 block mb-2 flex items-center gap-2">
+                    <i class="ri-global-line text-dex-accent"></i>
+                    Select Network
+                </label>
+                <select id="chainSelect" class="input-bg w-full rounded-xl px-4 py-3 text-sm outline-none focus:border-dex-accent transition cursor-pointer">
+                    <option value="1" data-color="#7289DA"><img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg" class="network-option-icon" onerror="this.style.display='none'"> Ethereum (ETH)</option>
+                    <option value="56" selected data-color="#F3A732"><img src="https://cryptologos.cc/logos/bnb-bnb-logo.svg" class="network-option-icon" onerror="this.style.display='none'"> BNB Chain (BNB)</option>
+                    <option value="137" data-color="#8247E5"><img src="https://cryptologos.cc/logos/polygon-matic-logo.svg" class="network-option-icon" onerror="this.style.display='none'"> Polygon (MATIC)</option>
+                    <option value="42161" data-color="#28A0F0"><img src="https://cryptologos.cc/logos/arbitrum-arb-logo.svg" class="network-option-icon" onerror="this.style.display='none'"> Arbitrum (ARB)</option>
+                    <option value="10" data-color="#EB386A"><span class="optimism-logo" style="margin-right: 8px;">OP</span> Optimism (OP)</option>
+                    <option value="8453" data-color="#0052FF"><img src="https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/base/info/logo.png" class="network-option-icon" onerror="this.style.display='none'"> Base (BASE)</option>
+                    <option value="43114" data-color="#E84142"><img src="https://cryptologos.cc/logos/avalanche-avax-logo.svg" class="network-option-icon" onerror="this.style.display='none'"> Avalanche (AVAX)</option>
+                </select>
+            </div>
+
+            <div class="mb-4" id="activeNetworkBadge"></div>
+
+            <div class="mb-5">
+                <label class="text-sm text-gray-400 block mb-2 flex items-center gap-2">
+                    <i class="ri-key-2-line text-dex-accent"></i>
+                    Token Address
+                </label>
+                <div class="flex gap-2">
+                    <input type="text" id="tokenAddress" placeholder="0x..." value="0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c" class="input-bg flex-1 rounded-xl px-4 py-3 text-sm outline-none focus:border-dex-accent transition font-mono">
+                    <button id="scanBtn" class="scan-btn px-5 py-3 rounded-xl transition flex items-center gap-2 shadow-lg cursor-pointer">
+                        <i class="ri-search-line"></i>
+                        Scan
+                    </button>
+                </div>
+            </div>
+
+            <div id="result">
+                <div class="result-bg rounded-xl p-6 text-center text-gray-500 text-sm">
+                    <i class="ri-shield-line text-3xl text-gray-600 mb-2 block"></i>
+                    <p>🔍 Enter token address and select network</p>
+                    <p class="text-xs mt-2 text-gray-600">NFT77 Safety Shield will scan 5 security layers</p>
+                </div>
+            </div>
+
+            <!-- Recent Scans History -->
+            <div class="mt-5 pt-4 border-custom border-t">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-sm font-semibold text-gray-400 flex items-center gap-2">
+                        <i class="ri-history-line text-dex-accent"></i>
+                        Recent Scans
+                    </span>
+                    <button id="clearHistoryBtn" class="text-[10px] text-gray-500 hover:text-red-400 transition">Clear All</button>
+                </div>
+                <div id="historyList" class="space-y-2 max-h-48 overflow-y-auto">
+                    <div class="text-center text-gray-500 text-xs py-2">No scan history yet</div>
+                </div>
+            </div>
+
+            <!-- Bridge Section -->
+            <div class="mt-5 pt-4 border-custom border-t">
+                <button id="openBridgeBtn" class="w-full py-2.5 rounded-xl transition flex items-center justify-center gap-2" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); color: white; font-weight: 600;">
+                    <i class="ri-bridge-line"></i>
+                    Cross-Chain Bridge (LI.FI + Relay)
+                </button>
+                <p class="text-center text-[10px] text-gray-500 mt-2">Bridge tokens across 7 chains • Powered by LI.FI & Relay</p>
+            </div>
+
+            <div class="mt-5 pt-4 border-custom border-t text-center">
+                <div class="flex justify-center items-center gap-3 text-[10px] text-gray-600">
+                    <i class="ri-shield-check-line text-dex-accent/40"></i>
+                    <span>5 Layer Protection</span>
+                    <span class="w-1 h-1 bg-gray-700 rounded-full"></span>
+                    <span>7 Supported Chains</span>
+                    <span class="w-1 h-1 bg-gray-700 rounded-full"></span>
+                    <span>Real-time Data</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Network Info Cards -->
+        <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div class="network-card"><img src="https://cryptologos.cc/logos/ethereum-eth-logo.svg" alt="ETH" class="network-icon w-6 h-6 mx-auto mb-1" onerror="this.style.display='none'"><div class="text-[10px] text-gray-500">Ethereum</div></div>
+            <div class="network-card"><img src="https://cryptologos.cc/logos/bnb-bnb-logo.svg" alt="BNB" class="network-icon w-6 h-6 mx-auto mb-1" onerror="this.style.display='none'"><div class="text-[10px] text-gray-500">BNB Chain</div></div>
+            <div class="network-card"><img src="https://cryptologos.cc/logos/polygon-matic-logo.svg" alt="MATIC" class="network-icon w-6 h-6 mx-auto mb-1" onerror="this.style.display='none'"><div class="text-[10px] text-gray-500">Polygon</div></div>
+            <div class="network-card"><img src="https://cryptologos.cc/logos/arbitrum-arb-logo.svg" alt="ARB" class="network-icon w-6 h-6 mx-auto mb-1" onerror="this.style.display='none'"><div class="text-[10px] text-gray-500">Arbitrum</div></div>
+            <div class="network-card"><div class="optimism-logo w-6 h-6 mx-auto mb-1" style="font-size: 10px;">OP</div><div class="text-[10px] text-gray-500">Optimism</div></div>
+            <div class="network-card"><img src="https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/base/info/logo.png" alt="BASE" class="network-icon w-6 h-6 mx-auto mb-1" onerror="this.style.display='none'"><div class="text-[10px] text-gray-500">Base</div></div>
+            <div class="network-card"><img src="https://cryptologos.cc/logos/avalanche-avax-logo.svg" alt="AVAX" class="network-icon w-6 h-6 mx-auto mb-1" onerror="this.style.display='none'"><div class="text-[10px] text-gray-500">Avalanche</div></div>
+            <div class="network-card"><svg width="24" height="24" viewBox="0 0 100 100" class="mx-auto mb-1"><path d="M50 5 L85 20 L85 50 C85 75 70 88 50 95 C30 88 15 75 15 50 L15 20 Z" fill="#F7931A" opacity="0.8"/><text x="50" y="62" text-anchor="middle" font-size="30" font-weight="bold" fill="white" font-family="Arial">5</text></svg><div class="text-[10px] text-gray-500">5 Layers</div></div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        const BASE_FEE_PERCENT = 0.3;
+        
+        // ==================== MULTI-WALLET CONNECTION ====================
+        let userWalletAddress = null;
+        let userWalletProvider = null;
+        
+        const safeWallets = [
+            { name: 'MetaMask', icon: '🦊', detect: () => typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask, connect: async () => { await window.ethereum.request({ method: 'eth_requestAccounts' }); return window.ethereum; } },
+            { name: 'OKX Wallet', icon: '🟠', detect: () => typeof window.okxwallet !== 'undefined', connect: async () => { await window.okxwallet.request({ method: 'eth_requestAccounts' }); return window.okxwallet; } },
+            { name: 'Coinbase Wallet', icon: '🔵', detect: () => typeof window.ethereum !== 'undefined' && window.ethereum.isCoinbaseWallet, connect: async () => { await window.ethereum.request({ method: 'eth_requestAccounts' }); return window.ethereum; } }
+        ];
+        
+        async function connectWallet() {
+            const availableWallets = safeWallets.filter(w => w.detect());
+            if (availableWallets.length === 0) { showWalletModal(); return; }
+            if (availableWallets.length === 1) { await connectToWallet(availableWallets[0]); }
+            else { showWalletModal(); }
+        }
+        
+        function showWalletModal() {
+            const modalHtml = `
+                <div id="walletModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onclick="if(event.target===this) closeWalletModal()">
+                    <div class="card-bg rounded-2xl border p-5 max-w-sm w-full">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg">Connect Wallet</h3>
+                            <button onclick="closeWalletModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-4">Choose your preferred wallet</p>
+                        <div class="space-y-2">
+                            <div onclick="connectToWalletByName('MetaMask')" class="wallet-option flex items-center gap-3 p-3 rounded-xl cursor-pointer"><span class="text-2xl">🦊</span><div><div class="font-semibold">MetaMask</div><div class="text-[10px] text-gray-500">Most popular</div></div></div>
+                            <div onclick="connectToWalletByName('OKX Wallet')" class="wallet-option flex items-center gap-3 p-3 rounded-xl cursor-pointer"><span class="text-2xl">🟠</span><div><div class="font-semibold">OKX Wallet</div><div class="text-[10px] text-gray-500">Multi-chain support</div></div></div>
+                            <div onclick="connectToWalletByName('Coinbase Wallet')" class="wallet-option flex items-center gap-3 p-3 rounded-xl cursor-pointer"><span class="text-2xl">🔵</span><div><div class="font-semibold">Coinbase Wallet</div><div class="text-[10px] text-gray-500">Secure & trusted</div></div></div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-700 text-center"><p class="text-[10px] text-gray-500">🔒 Only trusted, audited wallets supported</p></div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+        
+        window.connectToWalletByName = async function(walletName) {
+            closeWalletModal();
+            const wallet = safeWallets.find(w => w.name === walletName);
+            if (wallet) await connectToWallet(wallet);
+            else alert(`${walletName} is not installed.`);
+        };
+        
+        window.closeWalletModal = function() { document.getElementById('walletModal')?.remove(); };
+        
+        async function connectToWallet(wallet) {
+            try {
+                const provider = await wallet.connect();
+                if (!provider) return;
+                const accounts = await provider.request({ method: 'eth_accounts' });
+                if (accounts.length === 0) {
+                    await provider.request({ method: 'eth_requestAccounts' });
+                    const newAccounts = await provider.request({ method: 'eth_accounts' });
+                    userWalletAddress = newAccounts[0];
+                } else { userWalletAddress = accounts[0]; }
+                userWalletProvider = provider;
+                const walletBtn = document.getElementById('connectWalletBtn');
+                walletBtn.innerHTML = `<i class="ri-wallet-3-line text-dex-accent"></i><span class="hidden sm:inline">${userWalletAddress.slice(0, 6)}...${userWalletAddress.slice(-4)}</span>`;
+                if (provider.on) {
+                    provider.on('accountsChanged', (accounts) => {
+                        if (accounts.length === 0) {
+                            userWalletAddress = null;
+                            walletBtn.innerHTML = '<i class="ri-wallet-3-line text-dex-accent"></i><span class="hidden sm:inline">Connect Wallet</span>';
+                        } else {
+                            userWalletAddress = accounts[0];
+                            walletBtn.innerHTML = `<i class="ri-wallet-3-line text-dex-accent"></i><span class="hidden sm:inline">${userWalletAddress.slice(0, 6)}...${userWalletAddress.slice(-4)}</span>`;
+                        }
+                    });
+                }
+            } catch (error) { console.error('Wallet connection error:', error); alert('Failed to connect wallet.'); }
+        }
+        
+        document.getElementById('connectWalletBtn').addEventListener('click', connectWallet);
+        
+        // ==================== DARK/LIGHT MODE ====================
+        function setTheme(theme) {
+            const body = document.body;
+            const themeIcon = document.getElementById('themeIcon');
+            if (theme === 'light') {
+                body.classList.remove('dark'); body.classList.add('light');
+                themeIcon.className = 'ri-sun-line theme-icon';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.classList.remove('light'); body.classList.add('dark');
+                themeIcon.className = 'ri-moon-line theme-icon';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+        function toggleTheme() { if (document.body.classList.contains('dark')) setTheme('light'); else setTheme('dark'); }
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (savedTheme === 'light') setTheme('light');
+            else if (savedTheme === 'dark') setTheme('dark');
+            else setTheme(prefersDark ? 'dark' : 'light');
+        }
+        
+        // Network configuration
+        const networkConfig = {
+            1: { name: 'Ethereum', symbol: 'ETH', icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.svg', isOptimism: false, badgeClass: 'network-badge-eth' },
+            56: { name: 'BNB Chain', symbol: 'BNB', icon: 'https://cryptologos.cc/logos/bnb-bnb-logo.svg', isOptimism: false, badgeClass: 'network-badge-bsc' },
+            137: { name: 'Polygon', symbol: 'MATIC', icon: 'https://cryptologos.cc/logos/polygon-matic-logo.svg', isOptimism: false, badgeClass: 'network-badge-polygon' },
+            42161: { name: 'Arbitrum', symbol: 'ARB', icon: 'https://cryptologos.cc/logos/arbitrum-arb-logo.svg', isOptimism: false, badgeClass: 'network-badge-arb' },
+            10: { name: 'Optimism', symbol: 'OP', icon: '', isOptimism: true, badgeClass: 'network-badge-op' },
+            8453: { name: 'Base', symbol: 'BASE', icon: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/base/info/logo.png', isOptimism: false, badgeClass: 'network-badge-base' },
+            43114: { name: 'Avalanche', symbol: 'AVAX', icon: 'https://cryptologos.cc/logos/avalanche-avax-logo.svg', isOptimism: false, badgeClass: 'network-badge-avax' }
+        };
+        
+        const exampleAddresses = {
+            1: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+            56: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
+            137: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0',
+            42161: '0x912CE59144191C1204E64559FE8253a0e49E6541',
+            10: '0x4200000000000000000000000000000000000042',
+            8453: '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA',
+            43114: '0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7'
+        };
+        
+        function updateNetworkBadge() {
+            const chainId = document.getElementById('chainSelect').value;
+            const network = networkConfig[chainId];
+            const badgeContainer = document.getElementById('activeNetworkBadge');
+            if (network) {
+                if (network.isOptimism) {
+                    badgeContainer.innerHTML = `<div class="${network.badgeClass} network-badge w-fit"><div class="optimism-logo-sm" style="width: 16px; height: 16px; font-size: 8px;">OP</div>${network.name} (${network.symbol})</div>`;
+                } else {
+                    badgeContainer.innerHTML = `<div class="${network.badgeClass} network-badge w-fit"><img src="${network.icon}" class="network-icon-sm" onerror="this.style.display='none'">${network.name} (${network.symbol})</div>`;
+                }
+            }
+        }
+        
+        function setExampleAddress() {
+            const chainId = document.getElementById('chainSelect').value;
+            document.getElementById('tokenAddress').value = exampleAddresses[chainId];
+            setTimeout(() => scanToken(), 100);
+        }
+        
+        // ==================== HISTORY FUNCTIONS ====================
+        function saveToHistory(address, chainId, data) {
+            const history = JSON.parse(localStorage.getItem('nft77_scan_history') || '[]');
+            const network = networkConfig[chainId] || { name: 'Unknown' };
+            history.unshift({ id: Date.now(), address, chainId, chainName: network.name, safetyScore: data.safetyScore, isSafe: data.isSafe, timestamp: new Date().toISOString(), priceUSD: data.priceUSD });
+            if (history.length > 20) history.pop();
+            localStorage.setItem('nft77_scan_history', JSON.stringify(history));
+            displayHistory();
+        }
+        
+        function displayHistory() {
+            const history = JSON.parse(localStorage.getItem('nft77_scan_history') || '[]');
+            const historyDiv = document.getElementById('historyList');
+            if (history.length === 0) { historyDiv.innerHTML = '<div class="text-center text-gray-500 text-xs py-2">No scan history yet</div>'; return; }
+            historyDiv.innerHTML = history.map(item => `<div class="flex justify-between items-center text-xs p-2 rounded-lg hover:bg-gray-700/30 cursor-pointer" onclick="reScan('${item.address}', '${item.chainId}')"><div class="flex items-center gap-2 flex-1 min-w-0"><div class="w-2 h-2 rounded-full ${item.isSafe ? 'bg-green-400' : 'bg-red-400'}"></div><span class="font-mono truncate">${item.address.slice(0, 6)}...${item.address.slice(-4)}</span><span class="text-gray-500">${item.chainName}</span></div><div class="flex items-center gap-2"><span class="${item.safetyScore >= 70 ? 'text-green-400' : (item.safetyScore >= 40 ? 'text-yellow-400' : 'text-red-400')} font-bold">${item.safetyScore}</span><span class="text-gray-600 text-[10px]">${new Date(item.timestamp).toLocaleTimeString()}</span></div></div>`).join('');
+        }
+        
+        function reScan(address, chainId) {
+            document.getElementById('tokenAddress').value = address;
+            document.getElementById('chainSelect').value = chainId;
+            updateNetworkBadge();
+            scanToken();
+        }
+        
+        // ==================== BRIDGE FUNCTIONS ====================
+        const bridgeChains = [
+            { id: 1, name: 'Ethereum', symbol: 'ETH', icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.svg' },
+            { id: 56, name: 'BNB Chain', symbol: 'BNB', icon: 'https://cryptologos.cc/logos/bnb-bnb-logo.svg' },
+            { id: 137, name: 'Polygon', symbol: 'MATIC', icon: 'https://cryptologos.cc/logos/polygon-matic-logo.svg' },
+            { id: 42161, name: 'Arbitrum', symbol: 'ARB', icon: 'https://cryptologos.cc/logos/arbitrum-arb-logo.svg' },
+            { id: 10, name: 'Optimism', symbol: 'OP', icon: 'https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/optimism.svg' },
+            { id: 8453, name: 'Base', symbol: 'BASE', icon: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/base/info/logo.png' },
+            { id: 43114, name: 'Avalanche', symbol: 'AVAX', icon: 'https://cryptologos.cc/logos/avalanche-avax-logo.svg' }
+        ];
+        
+        let currentBridgeQuote = null;
+        let currentAggregator = null;
+        let currentSlippage = 0.5;
+        
+        function openBridgeModal() {
+            if (!userWalletAddress) { alert('Please connect your wallet first!'); connectWallet(); return; }
+            const modalHtml = `
+                <div id="bridgeModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onclick="if(event.target===this) closeBridgeModal()">
+                    <div class="card-bg rounded-2xl border p-5 max-w-md w-full">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg flex items-center gap-2"><i class="ri-bridge-line text-dex-accent"></i> Cross-Chain Bridge</h3>
+                            <button onclick="closeBridgeModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                        </div>
+                        <div class="space-y-4">
+                            <div><label class="text-xs text-gray-400">From</label><select id="bridgeFromChain" class="input-bg w-full rounded-xl px-4 py-2 text-sm outline-none focus:border-dex-accent mt-1">${bridgeChains.map(chain => `<option value="${chain.id}">${chain.name} (${chain.symbol})</option>`).join('')}</select></div>
+                            <div class="flex justify-center -my-1"><button onclick="swapBridgeChains()" class="bg-dex-accent/20 hover:bg-dex-accent/40 p-1 rounded-full transition"><i class="ri-arrow-down-line text-dex-accent text-sm"></i></button></div>
+                            <div><label class="text-xs text-gray-400">To</label><select id="bridgeToChain" class="input-bg w-full rounded-xl px-4 py-2 text-sm outline-none focus:border-dex-accent mt-1">${bridgeChains.slice(1).map(chain => `<option value="${chain.id}">${chain.name} (${chain.symbol})</option>`).join('')}</select></div>
+                            <div><label class="text-xs text-gray-400">Amount (Native Token)</label><input type="number" id="bridgeAmount" placeholder="0.0" class="input-bg w-full rounded-xl px-4 py-2 text-sm outline-none focus:border-dex-accent"></div>
+                            <div>
+                                <label class="text-xs text-gray-400 flex justify-between"><span>Slippage Tolerance</span><span id="bridgeSlippageWarning" class="text-yellow-400 text-[10px] hidden">⚠️ Higher slippage = higher fee</span></label>
+                                <div class="flex gap-2 mt-1 flex-wrap">
+                                    <button onclick="setBridgeSlippage(0.3)" class="bridge-slippage-btn px-3 py-1 rounded-lg text-xs bg-gray-700 hover:bg-dex-accent/50 transition">0.3%</button>
+                                    <button onclick="setBridgeSlippage(0.5)" class="bridge-slippage-btn px-3 py-1 rounded-lg text-xs bg-gray-700 hover:bg-dex-accent/50 transition">0.5%</button>
+                                    <button onclick="setBridgeSlippage(1.0)" class="bridge-slippage-btn px-3 py-1 rounded-lg text-xs bg-gray-700 hover:bg-dex-accent/50 transition">1.0%</button>
+                                    <button onclick="setBridgeSlippage(2.0)" class="bridge-slippage-btn px-3 py-1 rounded-lg text-xs bg-gray-700 hover:bg-dex-accent/50 transition">2.0%</button>
+                                    <button onclick="setBridgeSlippage(3.0)" class="bridge-slippage-btn px-3 py-1 rounded-lg text-xs bg-gray-700 hover:bg-dex-accent/50 transition">3.0%</button>
+                                    <button onclick="setBridgeSlippage(5.0)" class="bridge-slippage-btn px-3 py-1 rounded-lg text-xs bg-gray-700 hover:bg-dex-accent/50 transition">5.0%</button>
+                                </div>
+                                <input type="range" id="bridgeSlippageSlider" min="0.3" max="5.0" step="0.1" value="0.5" class="w-full mt-2 accent-dex-accent">
+                                <div class="flex justify-between text-[10px] text-gray-500 mt-1"><span>0.3%</span><span id="bridgeSlippageDisplay" class="text-dex-accent font-semibold">0.5%</span><span>5.0%</span></div>
+                            </div>
+                            <div id="bridgeInfo" class="bg-dex-accent/10 rounded-xl p-3 text-center text-xs">
+                                <div class="flex justify-between mb-1"><span class="text-gray-400">Best Aggregator:</span><span id="bridgeAggregator" class="font-semibold text-dex-accent">—</span></div>
+                                <div class="flex justify-between mb-1"><span class="text-gray-400">Est. Received:</span><span id="bridgeReceive" class="font-semibold">—</span></div>
+                                <div class="flex justify-between mb-1"><span class="text-gray-400">Bridge Fee (to NFT77):</span><span id="bridgeFee" class="text-dex-accent font-semibold">—</span></div>
+                                <div class="flex justify-between"><span class="text-gray-400">Est. Gas Cost:</span><span id="bridgeGas" class="text-gray-400">—</span></div>
+                            </div>
+                            <button id="bridgeExecuteBtn" class="swap-btn w-full py-2 rounded-xl font-semibold transition flex items-center justify-center gap-2 cursor-pointer" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)"><i class="ri-bridge-line"></i> Get Quote</button>
+                            <div class="text-center text-[10px] text-gray-500">🔒 Powered by LI.FI + Relay • Fee 0.3%-1.5% to NFT77</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            const slider = document.getElementById('bridgeSlippageSlider');
+            const display = document.getElementById('bridgeSlippageDisplay');
+            const warning = document.getElementById('bridgeSlippageWarning');
+            slider.addEventListener('input', function() {
+                const val = parseFloat(this.value);
+                display.textContent = val + '%';
+                if (val > 1.0) warning.classList.remove('hidden');
+                else warning.classList.add('hidden');
+                updateBridgeQuote();
+            });
+            document.getElementById('bridgeFromChain').addEventListener('change', () => updateBridgeQuote());
+            document.getElementById('bridgeToChain').addEventListener('change', () => updateBridgeQuote());
+            document.getElementById('bridgeAmount').addEventListener('input', () => updateBridgeQuote());
+            document.getElementById('bridgeExecuteBtn').addEventListener('click', executeBridge);
+            updateBridgeQuote();
+        }
+        
+        function setBridgeSlippage(value) {
+            const slider = document.getElementById('bridgeSlippageSlider');
+            if (slider) { slider.value = value; slider.dispatchEvent(new Event('input')); }
+        }
+        
+        function swapBridgeChains() {
+            const fromSelect = document.getElementById('bridgeFromChain');
+            const toSelect = document.getElementById('bridgeToChain');
+            const fromVal = fromSelect.value;
+            const toVal = toSelect.value;
+            fromSelect.value = toVal;
+            toSelect.value = fromVal;
+            updateBridgeQuote();
+        }
+        
+        async function updateBridgeQuote() {
+            const fromChain = document.getElementById('bridgeFromChain').value;
+            const toChain = document.getElementById('bridgeToChain').value;
+            const amount = document.getElementById('bridgeAmount').value;
+            const slippage = parseFloat(document.getElementById('bridgeSlippageSlider')?.value || 0.5);
+            
+            const receiveSpan = document.getElementById('bridgeReceive');
+            const feeSpan = document.getElementById('bridgeFee');
+            const gasSpan = document.getElementById('bridgeGas');
+            const aggSpan = document.getElementById('bridgeAggregator');
+            const executeBtn = document.getElementById('bridgeExecuteBtn');
+            
+            if (!amount || amount <= 0) {
+                receiveSpan.innerHTML = '—'; feeSpan.innerHTML = '—'; gasSpan.innerHTML = '—'; aggSpan.innerHTML = '—';
+                return;
+            }
+            
+            receiveSpan.innerHTML = '<i class="ri-loader-4-line animate-spin-slow"></i>';
+            executeBtn.innerHTML = '<i class="ri-loader-4-line animate-spin-slow"></i> Loading...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/bridge/quote/${fromChain}/${toChain}/${amount}/${slippage}?address=${userWalletAddress}`);
+                const data = await response.json();
+                if (data.success) {
+                    currentBridgeQuote = data;
+                    currentAggregator = data.aggregator;
+                    currentSlippage = slippage;
+                    aggSpan.innerHTML = data.aggregator;
+                    receiveSpan.innerHTML = `${data.toAmount} ${bridgeChains.find(c => c.id == toChain)?.symbol || 'Token'}`;
+                    feeSpan.innerHTML = `${(parseFloat(amount) * (data.feePercent / 100)).toFixed(6)} ${bridgeChains.find(c => c.id == fromChain)?.symbol || 'Token'} (${data.feePercent}%)`;
+                    gasSpan.innerHTML = data.gasCostUSD ? `~$${data.gasCostUSD}` : '~$0.50';
+                    executeBtn.innerHTML = '<i class="ri-bridge-line"></i> Bridge Now';
+                } else { throw new Error(data.error); }
+            } catch (error) {
+                receiveSpan.innerHTML = 'Route unavailable'; feeSpan.innerHTML = '—'; gasSpan.innerHTML = '—'; aggSpan.innerHTML = '—';
+                executeBtn.innerHTML = '<i class="ri-error-warning-line"></i> No route found';
+                currentBridgeQuote = null;
+            }
+        }
+        
+        async function executeBridge() {
+            if (!currentBridgeQuote) { alert('Please get a quote first'); return; }
+            if (!userWalletAddress) { alert('Please connect your wallet first!'); closeBridgeModal(); connectWallet(); return; }
+            const executeBtn = document.getElementById('bridgeExecuteBtn');
+            executeBtn.innerHTML = '<i class="ri-loader-4-line animate-spin-slow"></i> Processing...';
+            executeBtn.disabled = true;
+            try {
+                const response = await fetch(`${API_BASE}/api/bridge/execute`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fromChain: document.getElementById('bridgeFromChain').value,
+                        toChain: document.getElementById('bridgeToChain').value,
+                        amount: document.getElementById('bridgeAmount').value,
+                        userAddress: userWalletAddress,
+                        slippage: currentSlippage,
+                        aggregator: currentAggregator
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    alert(`✅ Bridge transaction ready!\n\nAggregator: ${data.aggregator}\nFee: ${data.feePercent}% to NFT77 wallet\n\nPlease check your wallet to confirm.`);
+                    closeBridgeModal();
+                } else { throw new Error(data.error); }
+            } catch (error) { alert('Bridge failed: ' + error.message); }
+            finally { executeBtn.innerHTML = '<i class="ri-bridge-line"></i> Bridge Now'; executeBtn.disabled = false; }
+        }
+        
+        function getTokenSymbol(chainId) {
+            const symbols = { 1: 'ETH', 56: 'BNB', 137: 'MATIC', 42161: 'ARB', 10: 'OP', 8453: 'BASE', 43114: 'AVAX' };
+            return symbols[chainId] || 'Token';
+        }
+        
+        function closeBridgeModal() { document.getElementById('bridgeModal')?.remove(); }
+        
+        // ==================== SWAP FUNCTIONS ====================
+        function calculateFeeFromSlippage(slippage) {
+            if (slippage <= 0.5) return 0.3;
+            const extraFee = Math.floor((slippage - 0.5) / 0.5) * 0.1;
+            return Math.min(0.3 + extraFee, 1.5);
+        }
+        
+        function openSwapModal(tokenAddress, chainId, symbol) {
+            if (!userWalletAddress) { alert('Please connect your wallet first!'); connectWallet(); return; }
+            const chainColor = { 1: { bg: 'linear-gradient(135deg, #7289DA 0%, #5A6AB5 100%)' }, 56: { bg: 'linear-gradient(135deg, #F3A732 0%, #D97A00 100%)' }, 137: { bg: 'linear-gradient(135deg, #8247E5 0%, #6B3EC5 100%)' }, 42161: { bg: 'linear-gradient(135deg, #28A0F0 0%, #1A7BC4 100%)' }, 10: { bg: 'linear-gradient(135deg, #EB386A 0%, #C4184A 100%)' }, 8453: { bg: 'linear-gradient(135deg, #0052FF 0%, #0044CC 100%)' }, 43114: { bg: 'linear-gradient(135deg, #E84142 0%, #B82121 100%)' } }[chainId] || { bg: 'linear-gradient(135deg, #F7931A 0%, #D97A00 100%)' };
+            const modalHtml = `<div id="swapModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onclick="if(event.target===this) closeSwapModal()"><div class="card-bg rounded-2xl border p-5 max-w-md w-full"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-lg">Swap ${symbol}</h3><button onclick="closeSwapModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button></div><div class="space-y-4"><div><label class="text-xs text-gray-400">From (${symbol})</label><input type="number" id="swapAmount" placeholder="0.0" class="input-bg w-full rounded-xl px-4 py-2 text-sm outline-none focus:border-dex-accent"></div><div><label class="text-xs text-gray-400 flex justify-between"><span>Slippage Tolerance</span><span id="swapSlippageWarning" class="text-yellow-400 text-[10px] hidden">⚠️ Higher slippage = higher fee</span></label><div class="flex gap-2 mt-1 flex-wrap"><button onclick="setSwapSlippage(0.3)" class="swap-slippage-btn px-3 py-1 rounded-lg text-xs bg-gray-700 hover:bg-dex-accent/50 transition">0.3%</button><button onclick="setSwapSlippage(0.5)" class="swap-slippage-btn px-3 py-1 rounded-lg text-xs bg-gray-700 hover:bg-dex-accent/50 transition">0.5%</button><button onclick="setSwapSlippage(1.0)" class="swap-slippage-btn px-3 py-1 rounded-lg text-xs bg-gray-700 hover:bg-dex-accent/50 transition">1.0%</button><button onclick="setSwapSlippage(2.0)" class="swap-slippage-btn px-3 py-1 rounded-lg text-xs bg-gray-700 hover:bg-dex-accent/50 transition">2.0%</button><button onclick="setSwapSlippage(3.0)" class="swap-slippage-btn px-3 py-1 rounded-lg text-xs bg-gray-700 hover:bg-dex-accent/50 transition">3.0%</button><button onclick="setSwapSlippage(5.0)" class="swap-slippage-btn px-3 py-1 rounded-lg text-xs bg-gray-700 hover:bg-dex-accent/50 transition">5.0%</button></div><input type="range" id="swapSlippageSlider" min="0.3" max="5.0" step="0.1" value="0.5" class="w-full mt-2 accent-dex-accent"><div class="flex justify-between text-[10px] text-gray-500 mt-1"><span>0.3%</span><span id="swapSlippageDisplay" class="text-dex-accent font-semibold">0.5%</span><span>5.0%</span></div></div><div id="swapFeeInfo" class="bg-dex-accent/10 rounded-xl p-2 text-center text-xs"><span id="swapFeePercent" class="font-bold text-dex-accent">0.3%</span><span class="text-gray-500"> platform fee for sustainable development & security</span></div><button id="swapGetQuoteBtn" class="swap-btn w-full py-2 rounded-xl font-semibold transition flex items-center justify-center gap-2 cursor-pointer" style="background: ${chainColor.bg}"><i class="ri-question-line"></i> Get Quote</button><div id="swapResultContainer" class="hidden"><label class="text-xs text-gray-400">To (USDT)</label><div id="swapResult" class="input-bg w-full rounded-xl px-4 py-2 text-sm">0.0</div></div></div></div></div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            const slider = document.getElementById('swapSlippageSlider');
+            const display = document.getElementById('swapSlippageDisplay');
+            const warning = document.getElementById('swapSlippageWarning');
+            const feeSpan = document.getElementById('swapFeePercent');
+            slider.addEventListener('input', function() {
+                const val = parseFloat(this.value);
+                display.textContent = val + '%';
+                if (val > 1.0) warning.classList.remove('hidden');
+                else warning.classList.add('hidden');
+                feeSpan.textContent = calculateFeeFromSlippage(val) + '%';
+            });
+            document.getElementById('swapGetQuoteBtn').addEventListener('click', () => getSwapQuote(chainId, symbol));
+        }
+        
+        function setSwapSlippage(value) {
+            const slider = document.getElementById('swapSlippageSlider');
+            if (slider) { slider.value = value; slider.dispatchEvent(new Event('input')); }
+        }
+        
+        async function getSwapQuote(chainId, symbol) {
+            const amount = document.getElementById('swapAmount').value;
+            const slippage = parseFloat(document.getElementById('swapSlippageSlider')?.value || 0.5);
+            const resultContainer = document.getElementById('swapResultContainer');
+            const resultDiv = document.getElementById('swapResult');
+            const getQuoteBtn = document.getElementById('swapGetQuoteBtn');
+            if (!amount || amount <= 0) { alert('Enter token amount'); return; }
+            getQuoteBtn.innerHTML = '<i class="ri-loader-4-line animate-spin-slow"></i> Loading...';
+            resultContainer.classList.add('hidden');
+            try {
+                const fee = calculateFeeFromSlippage(slippage);
+                const response = await fetch(`${API_BASE}/api/quote/${chainId}/native/0x55d398326f99059fF775485246999027B3197955/${amount}?slippage=${slippage}&fee=${fee}&userAddress=${userWalletAddress}`);
+                const data = await response.json();
+                getQuoteBtn.innerHTML = '<i class="ri-swap-line"></i> Get Quote';
+                if (data.error) alert(data.error);
+                else {
+                    resultContainer.classList.remove('hidden');
+                    resultDiv.innerHTML = `<div class="space-y-1"><div>Receive: ${parseFloat(data.toAmount).toFixed(6)} USDT</div><div class="text-xs text-gray-500">Slippage: ${slippage}%</div><div class="text-xs text-dex-accent">Fee ${fee}% (${parseFloat(data.feeAmount).toFixed(6)} USDT) → NFT77</div></div>`;
+                }
+            } catch (error) { getQuoteBtn.innerHTML = '<i class="ri-swap-line"></i> Get Quote'; alert('Error fetching quote'); }
+        }
+        
+        function closeSwapModal() { document.getElementById('swapModal')?.remove(); }
+        
+        // ==================== SCAN FUNCTION ====================
+        async function scanToken() {
+            const address = document.getElementById('tokenAddress').value.trim();
+            const chainId = document.getElementById('chainSelect').value;
+            const resultDiv = document.getElementById('result');
+            if (!address || address.length < 10 || !address.startsWith('0x')) { resultDiv.innerHTML = `<div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">❌ Enter a valid token address (starts with 0x)</div>`; return; }
+            resultDiv.innerHTML = `<div class="result-bg rounded-xl p-6 text-center"><i class="ri-loader-4-line animate-spin-slow text-dex-accent text-2xl"></i><p class="text-gray-400 text-sm mt-3">Scanning token (5 layer safety) on ${networkConfig[chainId]?.name || 'chain'}...</p></div>`;
+            try {
+                const response = await fetch(`${API_BASE}/api/scan/${chainId}/${address}`);
+                const data = await response.json();
+                if (data.error) { resultDiv.innerHTML = `<div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">❌ ${data.error}</div>`; return; }
+                saveToHistory(address, chainId, data);
+                const isSafe = data.safetyScore >= 70, isWarning = data.safetyScore >= 40 && data.safetyScore < 70;
+                const scoreColor = isSafe ? 'text-green-400' : (isWarning ? 'text-yellow-400' : 'text-red-400');
+                const statusText = isSafe ? '✅ SAFE' : (isWarning ? '⚠️ CAUTION' : '❌ RISKY');
+                const statusColor = isSafe ? 'bg-green-500/10 border-green-500/30' : (isWarning ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-red-500/10 border-red-500/30');
+                const network = networkConfig[chainId] || { name: data.chain || 'Unknown', symbol: '', isOptimism: false };
+                const chainColor = { 1: { bg: 'linear-gradient(135deg, #7289DA 0%, #5A6AB5 100%)' }, 56: { bg: 'linear-gradient(135deg, #F3A732 0%, #D97A00 100%)' }, 137: { bg: 'linear-gradient(135deg, #8247E5 0%, #6B3EC5 100%)' }, 42161: { bg: 'linear-gradient(135deg, #28A0F0 0%, #1A7BC4 100%)' }, 10: { bg: 'linear-gradient(135deg, #EB386A 0%, #C4184A 100%)' }, 8453: { bg: 'linear-gradient(135deg, #0052FF 0%, #0044CC 100%)' }, 43114: { bg: 'linear-gradient(135deg, #E84142 0%, #B82121 100%)' } }[chainId] || { bg: 'linear-gradient(135deg, #F7931A 0%, #D97A00 100%)' };
+                let checksHtml = '<div class="space-y-2 mt-3">';
+                if (data.checks) data.checks.forEach(check => { const checkColor = check.passed ? 'text-green-400' : 'text-red-400'; checksHtml += `<div class="flex justify-between items-center text-sm border-b border-gray-800 pb-2"><span class="text-gray-400 flex items-center gap-2"><span class="${checkColor}">${check.passed ? '✓' : '✗'}</span> ${check.name}</span><span class="${checkColor} text-xs text-right max-w-[60%]">${check.message}</span></div>`; });
+                checksHtml += '</div>';
+                const formatNumber = (num) => { if (!num || num === 0) return 'N/A'; if (num < 0.01) return '< $0.01'; if (num < 1) return `$${num.toFixed(6)}`; return `$${num.toLocaleString()}`; };
+                const swapButton = network.symbol !== 'Unknown' ? `<div class="mt-3"><button onclick="openSwapModal('${address}', '${chainId}', '${network.symbol}')" class="swap-btn w-full py-2 rounded-xl transition flex items-center justify-center gap-2" style="background: ${chainColor.bg}"><i class="ri-swap-line"></i> Swap ${network.symbol}</button></div>` : '';
+                resultDiv.innerHTML = `<div class="${statusColor} rounded-xl p-4 mb-3"><div class="flex justify-between items-center flex-wrap gap-2"><div class="flex items-center gap-2"><span class="font-semibold ${scoreColor} text-lg">${statusText}</span><span class="network-badge ${network.badgeClass}">${network.isOptimism ? '<div class="optimism-logo-sm" style="width: 14px; height: 14px; font-size: 7px;">OP</div>' : `<img src="${network.icon}" class="network-icon-sm" onerror="this.style.display='none'">`} ${network.name}</span></div><div><span class="text-2xl font-bold ${scoreColor}">${data.safetyScore}</span><span class="text-xs text-gray-500">/100</span></div></div><div class="mt-2"><div class="w-full bg-gray-700 rounded-full h-1.5"><div class="bg-dex-accent h-1.5 rounded-full transition-all duration-500" style="width: ${data.safetyScore}%"></div></div></div><div class="text-xs text-gray-500 mt-2 flex justify-between"><span>${data.passedChecks}/${data.totalChecks} layers passed</span><span>${network.symbol}</span></div></div><div class="result-bg rounded-xl p-4 space-y-2"><div class="flex justify-between items-center"><span class="text-gray-400 text-sm flex items-center gap-1"><i class="ri-money-dollar-circle-line text-dex-accent"></i> Price</span><span class="font-mono text-sm">${formatNumber(data.priceUSD)}</span></div><div class="flex justify-between items-center"><span class="text-gray-400 text-sm flex items-center gap-1"><i class="ri-water-flash-line text-dex-accent"></i> Liquidity</span><span class="font-mono text-sm">${formatNumber(data.liquidityUSD)}</span></div><div class="flex justify-between items-center"><span class="text-gray-400 text-sm flex items-center gap-1"><i class="ri-bar-chart-2-line text-dex-accent"></i> 24h Volume</span><span class="font-mono text-sm">${formatNumber(data.volume24h)}</span></div><div class="flex justify-between items-center"><span class="text-gray-400 text-sm flex items-center gap-1"><i class="ri-exchange-line text-dex-accent"></i> DEX</span><span class="font-mono text-sm">${data.dex || 'Unknown'}</span></div></div>${checksHtml}${swapButton}<div class="text-center text-xs text-gray-600 mt-3 pt-2 border-t border-gray-800"><i class="ri-shield-check-line text-dex-accent/50 mr-1"></i> NFT77 Safety Shield • 5 Layer Protection • Real-time Data</div>`;
+            } catch (error) { resultDiv.innerHTML = `<div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">❌ Failed to connect to server</div>`; }
+        }
+        
+        // Event listeners
+        document.getElementById('scanBtn').addEventListener('click', scanToken);
+        document.getElementById('tokenAddress').addEventListener('keypress', (e) => { if (e.key === 'Enter') scanToken(); });
+        document.getElementById('chainSelect').addEventListener('change', () => { updateNetworkBadge(); setExampleAddress(); });
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+        document.getElementById('clearHistoryBtn')?.addEventListener('click', () => { localStorage.removeItem('nft77_scan_history'); displayHistory(); });
+        document.getElementById('openBridgeBtn')?.addEventListener('click', openBridgeModal);
+        
+        window.openSwapModal = openSwapModal;
+        window.closeSwapModal = closeSwapModal;
+        window.setSwapSlippage = setSwapSlippage;
+        window.getSwapQuote = getSwapQuote;
+        window.openBridgeModal = openBridgeModal;
+        window.closeBridgeModal = closeBridgeModal;
+        window.setBridgeSlippage = setBridgeSlippage;
+        window.getQuoteAndSwap = getSwapQuote;
+        
+        initTheme();
+        updateNetworkBadge();
+        displayHistory();
+        setTimeout(() => scanToken(), 500);
+    </script>
+</body>
+</html>
